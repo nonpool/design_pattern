@@ -19,19 +19,7 @@ import java.util.stream.Collectors;
 public abstract class ClassUtil {
 
     //运行时的classpath
-    private static String[] classPaths;
-
-    static {
-        //windows和*inux路径分隔符不一样
-        String osName = System.getProperty("os.name");
-        String classPath = System.getProperty("java.class.path");
-        if (osName.contains("Windows") || osName.contains("windows")) {
-            classPaths = classPath.split(";");
-        } else {
-            classPaths = classPath.split(":");
-        }
-    }
-
+    private final static String[] CLASSPATHS = System.getProperty("java.class.path").split(File.pathSeparator);
 
     /**
      * 获取一个接口或者父类的所有子类(不含接口和抽象类)
@@ -39,9 +27,9 @@ public abstract class ClassUtil {
      * @param clazz 接口类或者父类
      * @return
      */
-    public static List<Class<?>> getAllClassBySubClass(Class<?> clazz, String... packages) {
+    public static List<Class<?>> getAllSubClassFromSuperClass(Class<?> clazz, String... packages) {
 
-        return getAllClassBySubClass(clazz, false, packages);
+        return getAllSubClassFromSuperClass(clazz, false, packages);
     }
 
     /**
@@ -52,9 +40,9 @@ public abstract class ClassUtil {
      * @param packages  限定寻找的包名，前缀匹配模式 findInJar为true时建议一定要限制包名提升速度和避免出错！
      * @return
      */
-    public static List<Class<?>> getAllClassBySubClass(Class<?> clazz, boolean findInJar, String... packages) {
+    public static List<Class<?>> getAllSubClassFromSuperClass(Class<?> clazz, boolean findInJar, String... packages) {
 
-        return getClasspathAllClass(findInJar, packages).stream()
+        return getClassFromClasspath(findInJar, packages).stream()
                 .filter(c -> !c.isInterface())
                 .filter(c -> !Modifier.isAbstract(c.getModifiers()))
                 .filter(clazz::isAssignableFrom)
@@ -67,7 +55,7 @@ public abstract class ClassUtil {
      *
      * @return
      */
-    private static List<Class<?>> getClasspathAllClass(boolean findInJar, String... packages) {
+    private static List<Class<?>> getClassFromClasspath(boolean findInJar, String... packages) {
         String[] packagesTemp = new String[packages.length];
         for (int i = 0; i < packages.length; i++) {
             packagesTemp[i] = packages[i].replaceAll("\\.", Matcher.quoteReplacement(File.separator));
@@ -75,7 +63,7 @@ public abstract class ClassUtil {
 
         List<Class<?>> ret = new LinkedList<>();
 
-        for (String classPath : classPaths) {
+        for (String classPath : CLASSPATHS) {
             File file = new File(classPath);
             ret.addAll(findClass(file, classPath, findInJar, packagesTemp));
         }

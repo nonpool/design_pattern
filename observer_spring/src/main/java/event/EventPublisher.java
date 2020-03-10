@@ -24,7 +24,7 @@ public class EventPublisher {
     //初始化操作 把监听者按照监听类型来存放
     static {
         //获取所有Listener的实现类,简单演示,不扫描jar包
-        List<Class<?>> allListenerClass = ClassUtil.getAllClassBySubClass(Listener.class, false);
+        List<Class<?>> allListenerClass = ClassUtil.getAllSubClassFromSuperClass(Listener.class, false);
         allListenerClass.forEach(c -> {
             //获取Listener的监听类型(泛型的真实类型)
             ParameterizedType parameterizedType = (ParameterizedType) c.getGenericInterfaces()[0];
@@ -34,6 +34,7 @@ public class EventPublisher {
             final Set<Listener> listenerSet = map.getOrDefault(classWithName, new HashSet<>());
             try {
                 listenerSet.add((Listener) c.getDeclaredConstructor().newInstance());
+                map.putIfAbsent(classWithName, listenerSet);
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 e.printStackTrace();
             }
